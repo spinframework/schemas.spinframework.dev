@@ -1,11 +1,7 @@
 # Spin JSON (TOML) Schemas
 
-The repo (branch) contains [JSON Schema](https://json-schema.org/) for Spin
+This repo contains [JSON Schema](https://json-schema.org/) for Spin
 configuration files.
-
-> Note: As of this writing this is an "[orphan
-> branch](https://git-scm.com/docs/git-checkout/2.14.6#Documentation/git-checkout.txt---orphannewbranch)"
-> in the Spin repo itself.
 
 Tools like [Taplo](https://taplo.tamasfe.dev/) can validate TOML files against
 JSON Schema fetched from a URL specified in a ["schema
