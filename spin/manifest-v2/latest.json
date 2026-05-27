@@ -1,55 +1,48 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "AppManifest",
   "description": "App manifest",
   "type": "object",
-  "required": [
-    "application",
-    "spin_manifest_version",
-    "trigger"
-  ],
   "properties": {
     "application": {
       "description": "`[application]`",
-      "allOf": [
-        {
-          "$ref": "#/definitions/AppDetails"
-        }
-      ]
+      "$ref": "#/$defs/AppDetails"
     },
     "component": {
       "description": "`[component.<id>]`",
       "type": "object",
       "additionalProperties": {
-        "$ref": "#/definitions/Component"
+        "$ref": "#/$defs/Component"
       }
     },
     "spin_manifest_version": {
       "description": "`spin_manifest_version = 2`",
       "type": "integer",
       "format": "uint",
-      "minimum": 0.0
+      "maximum": 2,
+      "minimum": 2
     },
     "trigger": {
-      "description": "The triggers to which the application responds. Most triggers can appear multiple times with different parameters: for example, the `http` trigger may appear multiple times with different routes, or the `redis` trigger with different channels.\n\nExample: `[[trigger.http]]`",
-      "allOf": [
-        {
-          "$ref": "#/definitions/TriggerSchema"
-        }
-      ]
+      "description": "The triggers to which the application responds. Most triggers can appear\nmultiple times with different parameters: for example, the `http` trigger may\nappear multiple times with different routes, or the `redis` trigger with\ndifferent channels.\n\nExample: `[[trigger.http]]`",
+      "$ref": "#/$defs/TriggerSchema"
     },
     "variables": {
-      "description": "Application configuration variables. These can be set via environment variables, or from sources such as Hashicorp Vault or Azure KeyVault by using a runtime config file. They are not available directly to components: use a component variable to ingest them.\n\nLearn more: https://spinframework.dev/variables, https://spinframework.dev/dynamic-configuration#application-variables-runtime-configuration",
+      "description": "Application configuration variables. These can be set via environment variables, or\nfrom sources such as Hashicorp Vault or Azure KeyVault by using a runtime config file.\nThey are not available directly to components: use a component variable to ingest them.\n\nLearn more: https://spinframework.dev/variables, https://spinframework.dev/dynamic-configuration#application-variables-runtime-configuration",
       "type": "object",
       "additionalProperties": {
-        "$ref": "#/definitions/Variable"
+        "$ref": "#/$defs/Variable"
       }
     }
   },
   "additionalProperties": false,
-  "definitions": {
+  "required": [
+    "spin_manifest_version",
+    "application",
+    "trigger"
+  ],
+  "$defs": {
     "AIModel": {
-      "description": "The AI models which the component is allowed to access. For local execution, you must download all models; for hosted execution, you should check which models are available in your target environment.\n\nExample: `ai_models = [\"llama2-chat\"]`\n\nLearn more: https://spinframework.dev/serverless-ai-api-guide#using-serverless-ai-from-applications",
+      "description": "The AI models which the component is allowed to access. For local execution, you must\ndownload all models; for hosted execution, you should check which models are available\nin your target environment.\n\nExample: `ai_models = [\"llama2-chat\"]`\n\nLearn more: https://spinframework.dev/serverless-ai-api-guide#using-serverless-ai-from-applications",
       "anyOf": [
         {
           "type": "string"
@@ -57,7 +50,7 @@
       ]
     },
     "AllowedOutboundHost": {
-      "description": "The network destinations which the component is allowed to access. Each entry is in the form \"(scheme)://(host)[:port]\". Each element allows * as a wildcard e.g. \"https://\\*\" (HTTPS on the default port to any destination) or \"\\*://localhost:\\*\" (any protocol to any port on localhost). The host part allows segment wildcards for subdomains e.g. \"https://\\*.example.com\". Application variables are allowed using `{{ my_var }}`` syntax.\n\nExample: `allowed_outbound_hosts = [\"redis://myredishost.com:6379\"]`\n\nLearn more: https://spinframework.dev/http-outbound#granting-http-permissions-to-components",
+      "description": "The network destinations which the component is allowed to access.\nEach entry is in the form \"(scheme)://(host)[:port]\". Each element\nallows * as a wildcard e.g. \"https://\\*\" (HTTPS on the default port\nto any destination) or \"\\*://localhost:\\*\" (any protocol to any port on\nlocalhost). The host part allows segment wildcards for subdomains\ne.g. \"https://\\*.example.com\". Application variables are allowed using\n`{{ my_var }}`` syntax.\n\nExample: `allowed_outbound_hosts = [\"redis://myredishost.com:6379\"]`\n\nLearn more: https://spinframework.dev/http-outbound#granting-http-permissions-to-components",
       "anyOf": [
         {
           "type": "string"
@@ -67,9 +60,6 @@
     "AppDetails": {
       "description": "App details",
       "type": "object",
-      "required": [
-        "name"
-      ],
       "properties": {
         "authors": {
           "description": "The author(s) of the application.\n\n`authors = [\"author@example.com\"]`",
@@ -86,12 +76,19 @@
           "description": "The name of the application.\n\nExample: `name = \"my-app\"`",
           "type": "string"
         },
+        "targets": {
+          "description": "The Spin environments with which application components must be compatible\nunless otherwise specified. Individual components may express different\nrequirements: these override the application-level default.\n\nExample: `targets = [\"spin-up:3.3\", \"spinkube:0.4\"]`",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TargetEnvironmentRef"
+          }
+        },
         "tool": {
           "description": "Settings for custom tools or plugins. Spin ignores this field.",
           "type": "object"
         },
         "trigger": {
-          "description": "Application-level settings for the trigger types used in the application. The possible values are trigger type-specific.\n\nExample:\n\n```ignore [application.triggers.redis] address = \"redis://notifications.example.com:6379\" ```\n\nLearn more (Redis example): https://spinframework.dev/redis-trigger#setting-a-default-server",
+          "description": "Application-level settings for the trigger types used in the application.\nThe possible values are trigger type-specific.\n\nExample:\n\n```ignore\n[application.triggers.redis]\naddress = \"redis://notifications.example.com:6379\"\n```\n\nLearn more (Redis example): https://spinframework.dev/redis-trigger#setting-a-default-server",
           "type": "object"
         },
         "version": {
@@ -99,10 +96,13 @@
           "type": "string"
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ]
     },
     "Commands": {
-      "description": "The command or commands to build the application. If multiple commands are specified, they are run sequentially from left to right.\n\nExample: `command = \"cargo build\"`, `command = [\"npm install\", \"npm run build\"]`\n\nLearn more: https://spinframework.dev/build#setting-up-for-spin-build",
+      "description": "The command or commands to build the application. If multiple commands\nare specified, they are run sequentially from left to right.\n\nExample: `command = \"cargo build\"`, `command = [\"npm install\", \"npm run build\"]`\n\nLearn more: https://spinframework.dev/build#setting-up-for-spin-build",
       "anyOf": [
         {
           "type": "string"
@@ -118,37 +118,34 @@
     "Component": {
       "description": "A Spin component.",
       "type": "object",
-      "required": [
-        "source"
-      ],
       "properties": {
         "ai_models": {
-          "description": "The AI models which the component is allowed to access. For local execution, you must download all models; for hosted execution, you should check which models are available in your target environment.\n\nExample: `ai_models = [\"llama2-chat\"]`\n\nLearn more: https://spinframework.dev/serverless-ai-api-guide#using-serverless-ai-from-applications",
+          "description": "The AI models which the component is allowed to access. For local execution, you must\ndownload all models; for hosted execution, you should check which models are available\nin your target environment.\n\nExample: `ai_models = [\"llama2-chat\"]`\n\nLearn more: https://spinframework.dev/serverless-ai-api-guide#using-serverless-ai-from-applications",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/AIModel"
+            "$ref": "#/$defs/AIModel"
           }
         },
         "allowed_http_hosts": {
           "description": "Deprecated. Use `allowed_outbound_hosts` instead.\n\nExample: `allowed_http_hosts = [\"example.com\"]`",
-          "deprecated": true,
           "type": "array",
+          "deprecated": true,
           "items": {
             "type": "string"
           }
         },
         "allowed_outbound_hosts": {
-          "description": "The network destinations which the component is allowed to access. Each entry is in the form \"(scheme)://(host)[:port]\". Each element allows * as a wildcard e.g. \"https://\\*\" (HTTPS on the default port to any destination) or \"\\*://localhost:\\*\" (any protocol to any port on localhost). The host part allows segment wildcards for subdomains e.g. \"https://\\*.example.com\". Application variables are allowed using `{{ my_var }}`` syntax.\n\nExample: `allowed_outbound_hosts = [\"redis://myredishost.com:6379\"]`\n\nLearn more: https://spinframework.dev/http-outbound#granting-http-permissions-to-components",
+          "description": "The network destinations which the component is allowed to access.\nEach entry is in the form \"(scheme)://(host)[:port]\". Each element\nallows * as a wildcard e.g. \"https://\\*\" (HTTPS on the default port\nto any destination) or \"\\*://localhost:\\*\" (any protocol to any port on\nlocalhost). The host part allows segment wildcards for subdomains\ne.g. \"https://\\*.example.com\". Application variables are allowed using\n`{{ my_var }}`` syntax.\n\nExample: `allowed_outbound_hosts = [\"redis://myredishost.com:6379\"]`\n\nLearn more: https://spinframework.dev/http-outbound#granting-http-permissions-to-components",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/AllowedOutboundHost"
+            "$ref": "#/$defs/AllowedOutboundHost"
           }
         },
         "build": {
           "description": "The component build configuration.\n\nLearn more: https://spinframework.dev/build",
           "anyOf": [
             {
-              "$ref": "#/definitions/ComponentBuildConfig"
+              "$ref": "#/$defs/ComponentBuildConfig"
             },
             {
               "type": "null"
@@ -157,14 +154,14 @@
         },
         "dependencies": {
           "description": "Specifies how to satisfy Wasm Component Model imports of this component.\n\nLearn more: https://spinframework.dev/writing-apps#using-component-dependencies",
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/ComponentDependency"
-          }
+          "$ref": "#/$defs/ComponentDependencies"
         },
         "dependencies_inherit_configuration": {
-          "description": "If true, dependencies can invoke Spin APIs with the same permissions as the main component. If false, dependencies have no permissions (e.g. network, key-value stores, SQLite databases).\n\nLearn more: https://spinframework.dev/writing-apps#dependency-permissions",
-          "type": "boolean"
+          "description": "If true, dependencies can invoke Spin APIs with the same permissions as the main\ncomponent. If false, dependencies have no permissions (e.g. network,\nkey-value stores, SQLite databases).\n\nLearn more: https://spinframework.dev/writing-apps#dependency-permissions",
+          "type": [
+            "boolean",
+            "null"
+          ]
         },
         "description": {
           "description": "A human-readable description of the component.\n\nExample: `description = \"Shopping cart\"`",
@@ -178,7 +175,7 @@
           }
         },
         "exclude_files": {
-          "description": "Any files or glob patterns that should not be available to the Wasm module at runtime, even though they match a `files`` entry.\n\nExample: `exclude_files = [\"secrets/*\"]`\n\nLearn more: https://spinframework.dev/writing-apps#including-files-with-components",
+          "description": "Any files or glob patterns that should not be available to the\nWasm module at runtime, even though they match a `files`` entry.\n\nExample: `exclude_files = [\"secrets/*\"]`\n\nLearn more: https://spinframework.dev/writing-apps#including-files-with-components",
           "type": "array",
           "items": {
             "type": "string"
@@ -188,29 +185,42 @@
           "description": "The files the component is allowed to read. Each list entry is either:\n\n- a glob pattern (e.g. \"assets/**/*.jpg\"); or\n\n- a source-destination pair indicating where a host directory should be mapped in the guest (e.g. { source = \"assets\", destination = \"/\" })\n\nLearn more: https://spinframework.dev/writing-apps#including-files-with-components",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/WasiFilesMount"
+            "$ref": "#/$defs/WasiFilesMount"
           }
         },
         "key_value_stores": {
-          "description": "The key-value stores which the component is allowed to access. Stores are identified by label e.g. \"default\" or \"customer\". Stores other than \"default\" must be mapped to a backing store in the runtime config.\n\nExample: `key_value_stores = [\"default\", \"my-store\"]`\n\nLearn more: https://spinframework.dev/kv-store-api-guide#custom-key-value-stores",
+          "description": "The key-value stores which the component is allowed to access. Stores are identified\nby label e.g. \"default\" or \"customer\". Stores other than \"default\" must be mapped\nto a backing store in the runtime config.\n\nExample: `key_value_stores = [\"default\", \"my-store\"]`\n\nLearn more: https://spinframework.dev/kv-store-api-guide#custom-key-value-stores",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/KeyValueStore"
+            "$ref": "#/$defs/KeyValueStore"
+          }
+        },
+        "profile": {
+          "description": "Override values to use when building or running a named build profile.\n\nExample: `profile.debug.build.command = \"npm run build-debug\"`",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/ComponentProfileOverride"
           }
         },
         "source": {
           "description": "The file, package, or URL containing the component Wasm binary.\n\nExample: `source = \"bin/cart.wasm\"`\n\nLearn more: https://spinframework.dev/writing-apps#the-component-source",
-          "allOf": [
-            {
-              "$ref": "#/definitions/ComponentSource"
-            }
-          ]
+          "$ref": "#/$defs/ComponentSource"
         },
         "sqlite_databases": {
-          "description": "The SQLite databases which the component is allowed to access. Databases are identified by label e.g. \"default\" or \"analytics\". Databases other than \"default\" must be mapped to a backing store in the runtime config. Use \"spin up --sqlite\" to run database setup scripts.\n\nExample: `sqlite_databases = [\"default\", \"my-database\"]`\n\nLearn more: https://spinframework.dev/sqlite-api-guide#preparing-an-sqlite-database",
+          "description": "The SQLite databases which the component is allowed to access. Databases are identified\nby label e.g. \"default\" or \"analytics\". Databases other than \"default\" must be mapped\nto a backing store in the runtime config. Use \"spin up --sqlite\" to run database setup scripts.\n\nExample: `sqlite_databases = [\"default\", \"my-database\"]`\n\nLearn more: https://spinframework.dev/sqlite-api-guide#preparing-an-sqlite-database",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/SqliteDatabase"
+            "$ref": "#/$defs/SqliteDatabase"
+          }
+        },
+        "targets": {
+          "description": "The Spin environments with which the component must be compatible.\nIf present, this overrides the default application targets (they are not combined).\n\nExample: `targets = [\"spin-up:3.3\", \"spinkube:0.4\"]`",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/TargetEnvironmentRef"
           }
         },
         "tool": {
@@ -218,92 +228,106 @@
           "type": "object"
         },
         "variables": {
-          "description": "Configuration variables available to the component. Names must be in `lower_snake_case`. Values are strings, and may refer to application variables using `{{ ... }}` syntax.\n\n`variables = { users_endpoint = \"https://{{ api_host }}/users\"}`\n\nLearn more: https://spinframework.dev/variables#adding-variables-to-your-applications",
+          "description": "Configuration variables available to the component. Names must be\nin `lower_snake_case`. Values are strings, and may refer\nto application variables using `{{ ... }}` syntax.\n\n`variables = { users_endpoint = \"https://{{ api_host }}/users\"}`\n\nLearn more: https://spinframework.dev/variables#adding-variables-to-your-applications",
           "type": "object",
           "additionalProperties": {
             "type": "string"
           }
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "required": [
+        "source"
+      ]
     },
     "ComponentBuildConfig": {
       "description": "Component build configuration",
       "type": "object",
-      "required": [
-        "command"
-      ],
       "properties": {
         "command": {
-          "description": "The command or commands to build the application. If multiple commands are specified, they are run sequentially from left to right.\n\nExample: `command = \"cargo build\"`, `command = [\"npm install\", \"npm run build\"]`\n\nLearn more: https://spinframework.dev/build#setting-up-for-spin-build",
-          "allOf": [
-            {
-              "$ref": "#/definitions/Commands"
-            }
-          ]
+          "description": "The command or commands to build the component. If multiple commands\nare specified, they are run sequentially from left to right.\n\nExample: `command = \"cargo build --release\"`, `command = [\"npm install\", \"npm run build\"]`\n\nLearn more: https://spinframework.dev/build#setting-up-for-spin-build",
+          "$ref": "#/$defs/Commands"
         },
         "watch": {
-          "description": "Source files to use in `spin watch`. This is a set of paths or glob patterns (relative to the build working directory). A change to any matching file causes `spin watch` to rebuild the application before restarting the application.\n\nExample: `watch = [\"src/**/*.rs\"]`\n\nLearn more: https://spinframework.dev/running-apps#monitoring-applications-for-changes",
+          "description": "Source files to use in `spin watch`. This is a set of paths or glob patterns (relative\nto the build working directory). A change to any matching file causes\n`spin watch` to rebuild the application before restarting the application.\n\nExample: `watch = [\"src/**/*.rs\"]`\n\nLearn more: https://spinframework.dev/running-apps#monitoring-applications-for-changes",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/WatchCommand"
+            "$ref": "#/$defs/WatchCommand"
           }
         },
         "workdir": {
-          "description": "The working directory for the build command. If omitted, the build working directory is the directory containing `spin.toml`.\n\nExample: `workdir = \"components/main\"\n\nLearn more: https://spinframework.dev/build#overriding-the-working-directory",
+          "description": "The working directory for the build command. If omitted, the build working\ndirectory is the directory containing `spin.toml`.\n\nExample: `workdir = \"components/main\"\n\nLearn more: https://spinframework.dev/build#overriding-the-working-directory",
           "type": [
             "string",
             "null"
           ]
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "required": [
+        "command"
+      ]
+    },
+    "ComponentDependencies": {
+      "description": "Component dependencies",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/ComponentDependency"
+      }
     },
     "ComponentDependency": {
-      "description": "Specifies how to satisfy an import dependency of the component. This may be one of:\n\n- A semantic versioning constraint for the package version to use. Spin fetches the latest matching version of the package whose name matches the dependency name from the default registry.\n\nExample: `\"my:dep/import\" = \">= 0.1.0\"`\n\n- A package from a registry.\n\nExample: `\"my:dep/import\" = { version = \"0.1.0\", registry = \"registry.io\", ...}`\n\n- A package from a filesystem path.\n\nExample: `\"my:dependency\" = { path = \"path/to/component.wasm\", export = \"my-export\" }`\n\n- A package from an HTTP URL.\n\nExample: `\"my:import\" = { url = \"https://example.com/component.wasm\", sha256 = \"sha256:...\" }`\n\nLearn more: https://spinframework.dev/v3/writing-apps#using-component-dependencies",
+      "description": "Specifies how to satisfy an import dependency of the component. This may be one of:\n\n- A semantic versioning constraint for the package version to use. Spin fetches the latest matching version of the package whose name matches the dependency name from the default registry.\n\nExample: `\"my:dep/import\" = \">= 0.1.0\"`\n\n- A package from a registry.\n\nExample: `\"my:dep/import\" = { version = \"0.1.0\", registry = \"registry.io\", ...}`\n\n- A package from a filesystem path.\n\nExample: `\"my:dependency\" = { path = \"path/to/component.wasm\", export = \"my-export\" }`\n\n- A component in the application. The referenced component binary is composed: additional\n  configuration such as files, networking, storage, etc. are ignored. This is intended\n  primarily as a convenience for including dependencies in the manifest so that they\n  can be built using `spin build`.\n\nExample: `\"my:dependency\" = { component = \"my-dependency\", export = \"my-export\" }`\n\n- A package from an HTTP URL.\n\nExample: `\"my:import\" = { url = \"https://example.com/component.wasm\", sha256 = \"sha256:...\" }`\n\nLearn more: https://spinframework.dev/v3/writing-apps#using-component-dependencies",
       "anyOf": [
         {
           "type": "string"
         },
         {
           "type": "object",
-          "required": [
-            "version"
-          ],
           "properties": {
             "export": {
-              "description": "The name of the export in the package. If omitted, this defaults to the name of the import.\n\nExample: `\"my:dep/import\" = { export = \"your:impl/export\", version = \" 0.1.0\" }`\n\nLearn more: https://spinframework.dev/writing-apps#dependencies-from-a-registry",
+              "description": "The name of the export in the package. If omitted, this defaults to the name of the import.\n\nExample: `\"my:dep/import\" = { export = \"your:impl/export\", version = \"0.1.0\" }`\n\nLearn more: https://spinframework.dev/writing-apps#dependencies-from-a-registry",
               "type": [
                 "string",
                 "null"
               ]
             },
+            "inherit_configuration": {
+              "description": "The set of configurations to inherit from the parent component. If omitted or set to `false`,\nno configurations will be inherited. If `true`, all configurations will be inherited.\nSelective inheritance can be specified by enumerating the configuration keys the dependency\nwould like to inherit.\n\nExamples:\n    `\"my:dep/import\" = { version = \"0.1.0\", inherit_configuration = true }`\n    `\"my:dep/import\" = { version = \"0.1.0\", inherit_configuration = [\"ai_models\", \"allowed_outbound_hosts\"] }`",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/InheritConfiguration"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "package": {
-              "description": "The name of the package to use. If omitted, this defaults to the package name of the imported interface.\n\nExample: `\"my:dep/import\" = { package = \"your:implementation\", version = \" 0.1.0\" }`\n\nLearn more: https://spinframework.dev/writing-apps#dependencies-from-a-registry",
+              "description": "The name of the package to use. If omitted, this defaults to the package name of the\nimported interface.\n\nExample: `\"my:dep/import\" = { package = \"your:implementation\", version = \"0.1.0\" }`\n\nLearn more: https://spinframework.dev/writing-apps#dependencies-from-a-registry",
               "type": [
                 "string",
                 "null"
               ]
             },
             "registry": {
-              "description": "The registry that hosts the package. If omitted, this defaults to your system default registry.\n\nExample: `\"my:dep/import\" = { registry = \"registry.io\", version = \" 0.1.0\" }`\n\nLearn more: https://spinframework.dev/writing-apps#dependencies-from-a-registry",
+              "description": "The registry that hosts the package. If omitted, this defaults to your\nsystem default registry.\n\nExample: `\"my:dep/import\" = { registry = \"registry.io\", version = \"0.1.0\" }`\n\nLearn more: https://spinframework.dev/writing-apps#dependencies-from-a-registry",
               "type": [
                 "string",
                 "null"
               ]
             },
             "version": {
-              "description": "A semantic versioning constraint for the package version to use. Required. Spin fetches the latest matching version from the specified registry, or from the default registry if no registry is specified.\n\nExample: `\"my:dep/import\" = { version = \">= 0.1.0\" }`\n\nLearn more: https://spinframework.dev/writing-apps#dependencies-from-a-registry",
+              "description": "A semantic versioning constraint for the package version to use. Required. Spin\nfetches the latest matching version from the specified registry, or from\nthe default registry if no registry is specified.\n\nExample: `\"my:dep/import\" = { version = \">= 0.1.0\" }`\n\nLearn more: https://spinframework.dev/writing-apps#dependencies-from-a-registry",
               "type": "string"
             }
           },
-          "additionalProperties": false
+          "additionalProperties": false,
+          "required": [
+            "version"
+          ]
         },
         {
           "type": "object",
-          "required": [
-            "path"
-          ],
           "properties": {
             "export": {
               "description": "The name of the export in the package. If omitted, this defaults to the name of the import.\n\nExample: `\"my:dep/import\" = { export = \"your:impl/export\", path = \"path/to/component.wasm\" }`\n\nLearn more: https://spinframework.dev/writing-apps#dependencies-from-a-local-component",
@@ -312,19 +336,29 @@
                 "null"
               ]
             },
+            "inherit_configuration": {
+              "description": "The set of configurations to inherit from the parent component. If omitted or set to `false`,\nno configurations will be inherited. If `true`, all configurations will be inherited.\nSelective inheritance can be specified by enumerating the configuration keys the dependency\nwould like to inherit.\n\nExamples:\n    `\"my:dep/import\" = { version = \"0.1.0\", inherit_configuration = true }`\n    `\"my:dep/import\" = { version = \"0.1.0\", inherit_configuration = [\"ai_models\", \"allowed_outbound_hosts\"] }`",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/InheritConfiguration"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "path": {
               "description": "The path to the Wasm file that implements the dependency.\n\nExample: `\"my:dep/import\" = { path = \"path/to/component.wasm\" }`\n\nLearn more: https://spinframework.dev/writing-apps#dependencies-from-a-local-component",
               "type": "string"
             }
           },
-          "additionalProperties": false
+          "additionalProperties": false,
+          "required": [
+            "path"
+          ]
         },
         {
           "type": "object",
-          "required": [
-            "digest",
-            "url"
-          ],
           "properties": {
             "digest": {
               "description": "The SHA256 digest of the Wasm file. This is required for integrity checking. Must begin with `sha256:`.\n\nExample: `\"my:dep/import\" = { sha256 = \"sha256:...\", ... }`\n\nLearn more: https://spinframework.dev/writing-apps#dependencies-from-a-url",
@@ -337,14 +371,114 @@
                 "null"
               ]
             },
+            "inherit_configuration": {
+              "description": "The set of configurations to inherit from the parent component. If omitted or set to `false`,\nno configurations will be inherited. If `true`, all configurations will be inherited.\nSelective inheritance can be specified by enumerating the configuration keys the dependency\nwould like to inherit.\n\nExamples:\n    `\"my:dep/import\" = { version = \"0.1.0\", inherit_configuration = true }`\n    `\"my:dep/import\" = { version = \"0.1.0\", inherit_configuration = [\"ai_models\", \"allowed_outbound_hosts\"] }`",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/InheritConfiguration"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "url": {
               "description": "The URL to the Wasm component that implements the dependency.\n\nExample: `\"my:dep/import\" = { url = \"https://example.com/component.wasm\", sha256 = \"sha256:...\" }`\n\nLearn more: https://spinframework.dev/writing-apps#dependencies-from-a-url",
               "type": "string"
             }
           },
-          "additionalProperties": false
+          "additionalProperties": false,
+          "required": [
+            "url",
+            "digest"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "component": {
+              "description": "The ID of the component which implements the dependency.\n\nExample: `\"my:dep/import\" = { component = \"my-dependency\" }`\n\nLearn more: https://spinframework.dev/writing-apps#using-component-dependencies",
+              "$ref": "#/$defs/Id"
+            },
+            "export": {
+              "description": "The name of the export in the package. If omitted, this defaults to the name of the import.\n\nExample: `\"my:dep/import\" = { export = \"your:impl/export\", component = \"my-dependency\" }`\n\nLearn more: https://spinframework.dev/writing-apps#using-component-dependencies",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "inherit_configuration": {
+              "description": "The set of configurations to inherit from the parent component. If omitted or set to `false`,\nno configurations will be inherited. If `true`, all configurations will be inherited.\nSelective inheritance can be specified by enumerating the configuration keys the dependency\nwould like to inherit.\n\nExamples:\n    `\"my:dep/import\" = { version = \"0.1.0\", inherit_configuration = true }`\n    `\"my:dep/import\" = { version = \"0.1.0\", inherit_configuration = [\"ai_models\", \"allowed_outbound_hosts\"] }`",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/InheritConfiguration"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "component"
+          ]
         }
       ]
+    },
+    "ComponentProfileBuildOverride": {
+      "description": "Customisations for a Spin component build in a non-default profile.",
+      "type": "object",
+      "properties": {
+        "command": {
+          "description": "The command or commands to build the component in a named profile. If multiple commands\nare specified, they are run sequentially from left to right.\n\nExample: `build.command = \"cargo build\"`\n\nLearn more: https://spinframework.dev/build#setting-up-for-spin-build",
+          "$ref": "#/$defs/Commands"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "command"
+      ]
+    },
+    "ComponentProfileOverride": {
+      "description": "Customisations for a Spin component in a non-default profile.",
+      "type": "object",
+      "properties": {
+        "build": {
+          "description": "The command or commands for building the component in non-default profiles.\nIf a component has no special build instructions for a profile, the\ndefault build command is used.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ComponentProfileBuildOverride"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "dependencies": {
+          "description": "Wasm Component Model imports to be overridden in this profile.\nDependencies specified in the default profile will still be composed\nif not overridden here.\n\nLearn more: https://spinframework.dev/writing-apps#using-component-dependencies",
+          "$ref": "#/$defs/ComponentDependencies"
+        },
+        "environment": {
+          "description": "Environment variables for the Wasm module to be overridden in this profile.\nEnvironment variables specified in the default profile will still be set\nif not overridden here.\n\n`environment = { DB_URL = \"mysql://spin:spin@localhost/dev\" }`",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "source": {
+          "description": "The file, package, or URL containing the component Wasm binary.\n\nExample: `source = \"bin/debug/cart.wasm\"`\n\nLearn more: https://spinframework.dev/writing-apps#the-component-source",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ComponentSource"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
     },
     "ComponentSource": {
       "description": "The file, package, or URL containing the component Wasm binary. This may be:\n\n- The path to a Wasm file (relative to the manifest file)\n\nExample: `source = \"bin/cart.wasm\"`\n\n- The URL of a Wasm file downloadable over HTTP, accompanied by a digest to ensure integrity\n\nExample: `source = { url = \"https://example.com/example.wasm\", digest = \"sha256:6503...2375\" }`\n\n- The registry, package and version of a component from a registry\n\nExample: `source = { registry = \"ttl.sh\", package = \"user:registrytest\", version=\"1.0.0\" }`\n\nLearn more: https://spinframework.dev/writing-apps#the-component-source",
@@ -354,10 +488,6 @@
         },
         {
           "type": "object",
-          "required": [
-            "digest",
-            "url"
-          ],
           "properties": {
             "digest": {
               "description": "The SHA256 digest of the Wasm component binary. This must be prefixed with `sha256:`.\n\nExample: `digest = `\"sha256:abc123...\"`\n\nLearn more: https://spinframework.dev/writing-apps#the-component-source",
@@ -368,14 +498,14 @@
               "type": "string"
             }
           },
-          "additionalProperties": false
+          "additionalProperties": false,
+          "required": [
+            "url",
+            "digest"
+          ]
         },
         {
           "type": "object",
-          "required": [
-            "package",
-            "version"
-          ],
           "properties": {
             "package": {
               "description": "The package containing the Wasm component binary.\n\nExample: `package = \"example:component\"`\n\nLearn more: https://spinframework.dev/writing-apps#the-component-source",
@@ -393,71 +523,58 @@
               "type": "string"
             }
           },
-          "additionalProperties": false
+          "additionalProperties": false,
+          "required": [
+            "package",
+            "version"
+          ]
         }
       ]
     },
     "ComponentSpec": {
       "description": "Component reference or inline definition",
-      "anyOf": [
+      "oneOf": [
         {
-          "description": "`\"component-id\"`",
-          "allOf": [
-            {
-              "$ref": "#/definitions/Id_for_-_and_false"
-            }
-          ]
+          "$ref": "#/$defs/Id"
         },
         {
-          "description": "`{ ... }`",
-          "allOf": [
-            {
-              "$ref": "#/definitions/Component"
-            }
-          ]
+          "$ref": "#/$defs/Component"
         }
       ]
     },
     "HttpPrivateEndpoint": {
       "type": "object",
-      "required": [
-        "private"
-      ],
       "properties": {
         "private": {
           "description": "Whether the private endpoint is private. This must be true.",
           "type": "boolean"
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "required": [
+        "private"
+      ]
     },
     "HttpRouteSchema": {
       "anyOf": [
         {
-          "description": "The HTTP route that the trigger accepts. The route must begin with a `/``. The route may contain:\n\n- Any number of single-segment wildcards, using the syntax `:name`. It matches only a single segment of a path, and allows further matching on segments beyond it.\n\n- A trailing wildcard, using the syntax `/...`. This matches the given route and any route under it.\n\nIn particular, the route `/...` matches _all_ paths.\n\nExample: `route = \"/user/:name/...\"`\n\nLearn more: https://spinframework.dev/v3/http-trigger#http-trigger-routes",
+          "description": "The HTTP route that the trigger accepts. The route must begin with a `/``.\nThe route may contain:\n\n- Any number of single-segment wildcards, using the syntax `:name`. It matches only a single segment of a path, and allows further matching on segments beyond it.\n\n- A trailing wildcard, using the syntax `/...`. This matches the given route and any route under it.\n\nIn particular, the route `/...` matches _all_ paths.\n\nExample: `route = \"/user/:name/...\"`\n\nLearn more: https://spinframework.dev/v3/http-trigger#http-trigger-routes",
           "type": "string"
         },
         {
-          "description": "The trigger does not response to any external HTTP request, but only to requests via local service chaining.\n\nExample: `route = { private = true }`\n\nLearn more: https://spinframework.dev/v3/http-trigger#private-endpoints",
-          "allOf": [
-            {
-              "$ref": "#/definitions/HttpPrivateEndpoint"
-            }
-          ]
+          "description": "The trigger does not response to any external HTTP request, but only to requests\nvia local service chaining.\n\nExample: `route = { private = true }`\n\nLearn more: https://spinframework.dev/v3/http-trigger#private-endpoints",
+          "$ref": "#/$defs/HttpPrivateEndpoint"
         }
       ]
     },
     "HttpTriggerSchema": {
       "type": "object",
-      "required": [
-        "route"
-      ],
       "properties": {
         "component": {
           "description": "`component = ...`",
           "anyOf": [
             {
-              "$ref": "#/definitions/ComponentSpec"
+              "$ref": "#/$defs/ComponentSpec"
             },
             {
               "type": "null"
@@ -468,23 +585,13 @@
           "description": "`components = { ... }`",
           "type": "object",
           "additionalProperties": {
-            "oneOf": [
-              {
-                "$ref": "#/definitions/ComponentSpec"
-              },
-              {
-                "type": "array",
-                "items": {
-                  "$ref": "#/definitions/ComponentSpec"
-                }
-              }
-            ]
+            "$ref": "#/$defs/OneOrManyComponentSpecs"
           }
         },
         "executor": {
           "description": "`executor = { type = \"wagi\" }",
-          "default": null,
-          "type": "object"
+          "type": "object",
+          "default": null
         },
         "id": {
           "description": "`id = \"trigger-id\"`",
@@ -492,32 +599,58 @@
         },
         "route": {
           "description": "`route = \"/user/:name/...\"`",
-          "allOf": [
-            {
-              "$ref": "#/definitions/HttpRouteSchema"
-            }
-          ]
+          "$ref": "#/$defs/HttpRouteSchema"
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "required": [
+        "route"
+      ]
     },
-    "Id_for_-_and_false": {
-      "description": "An ID is a non-empty string containing one or more component model `word`s separated by a delimiter char.",
+    "Id": {
+      "description": "An ID is a non-empty string containing one or more component model\n`word`s separated by a delimiter char.",
       "type": "string"
     },
+    "InheritConfiguration": {
+      "description": "The set of configurations to inherit from the parent component.\n\nCan be specified as:\n- `true` — inherit all configurations\n- `false` — inherit no configurations (equivalent to omitting the field)\n- `[\"key1\", \"key2\"]` — inherit only the specified configuration keys",
+      "anyOf": [
+        {
+          "description": "All or no configurations will be inherited, specified as `true` or `false`.",
+          "type": "boolean"
+        },
+        {
+          "description": "Only the specified configuration keys will be inherited from the parent component.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
+    },
     "KeyValueStore": {
-      "description": "The key-value stores which the component is allowed to access. Stores are identified by label e.g. \"default\" or \"customer\". Stores other than \"default\" must be mapped to a backing store in the runtime config.\n\nExample: `key_value_stores = [\"default\", \"my-store\"]`\n\nLearn more: https://spinframework.dev/kv-store-api-guide#custom-key-value-stores",
+      "description": "The key-value stores which the component is allowed to access. Stores are identified\nby label e.g. \"default\" or \"customer\". Stores other than \"default\" must be mapped\nto a backing store in the runtime config.\n\nExample: `key_value_stores = [\"default\", \"my-store\"]`\n\nLearn more: https://spinframework.dev/kv-store-api-guide#custom-key-value-stores",
       "anyOf": [
         {
           "type": "string"
         }
       ]
     },
+    "OneOrManyComponentSpecs": {
+      "description": "One or many `ComponentSpec`(s)",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ComponentSpec"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ComponentSpec"
+          }
+        }
+      ]
+    },
     "RedisTriggerSchema": {
       "type": "object",
-      "required": [
-        "channel"
-      ],
       "properties": {
         "address": {
           "description": "`address = \"redis://redis.example.com:6379\"`",
@@ -534,7 +667,7 @@
           "description": "`component = ...`",
           "anyOf": [
             {
-              "$ref": "#/definitions/ComponentSpec"
+              "$ref": "#/$defs/ComponentSpec"
             },
             {
               "type": "null"
@@ -545,17 +678,7 @@
           "description": "`components = { ... }`",
           "type": "object",
           "additionalProperties": {
-            "oneOf": [
-              {
-                "$ref": "#/definitions/ComponentSpec"
-              },
-              {
-                "type": "array",
-                "items": {
-                  "$ref": "#/definitions/ComponentSpec"
-                }
-              }
-            ]
+            "$ref": "#/$defs/OneOrManyComponentSpecs"
           }
         },
         "id": {
@@ -563,13 +686,53 @@
           "type": "string"
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "required": [
+        "channel"
+      ]
     },
     "SqliteDatabase": {
-      "description": "The SQLite databases which the component is allowed to access. Databases are identified by label e.g. \"default\" or \"analytics\". Databases other than \"default\" must be mapped to a backing store in the runtime config. Use \"spin up --sqlite\" to run database setup scripts.\n\nExample: `sqlite_databases = [\"default\", \"my-database\"]`\n\nLearn more: https://spinframework.dev/sqlite-api-guide#preparing-an-sqlite-database",
+      "description": "The SQLite databases which the component is allowed to access. Databases are identified\nby label e.g. \"default\" or \"analytics\". Databases other than \"default\" must be mapped\nto a backing store in the runtime config. Use \"spin up --sqlite\" to run database setup scripts.\n\nExample: `sqlite_databases = [\"default\", \"my-database\"]`\n\nLearn more: https://spinframework.dev/sqlite-api-guide#preparing-an-sqlite-database",
       "anyOf": [
         {
           "type": "string"
+        }
+      ]
+    },
+    "TargetEnvironmentRef": {
+      "description": "Identifies a deployment target.",
+      "anyOf": [
+        {
+          "description": "Environment definition doc reference e.g. `spin-up:3.2`, `my-host`. This is looked up\nin the default environment catalogue (the `spin-environments` repo, `env` directory).",
+          "type": "string"
+        },
+        {
+          "description": "An environment definition doc HTTP URL",
+          "type": "object",
+          "properties": {
+            "url": {
+              "description": "The environment document URL e.g. `https://github.com/me/environments/blob/main/target-envs/spin-up.3.6.toml`.",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "url"
+          ]
+        },
+        {
+          "description": "A local environment document file. This is expected to contain a serialised\nEnvironmentDefinition in TOML format.",
+          "type": "object",
+          "properties": {
+            "path": {
+              "description": "The file path of the document.",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "path"
+          ]
         }
       ]
     },
@@ -580,14 +743,14 @@
           "description": "HTTP triggers",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/HttpTriggerSchema"
+            "$ref": "#/$defs/HttpTriggerSchema"
           }
         },
         "redis": {
           "description": "Redis triggers",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/RedisTriggerSchema"
+            "$ref": "#/$defs/RedisTriggerSchema"
           }
         }
       }
@@ -597,14 +760,21 @@
       "type": "object",
       "properties": {
         "default": {
-          "description": "The value of the variable if no value is supplied at runtime. If specified, the value must be a string. If not specified, `required`` must be `true`.\n\nExample: `default = \"default value\"`\n\nLearn more: https://spinframework.dev/variables#adding-variables-to-your-applications",
+          "description": "The value of the variable if no value is supplied at runtime. If specified,\nthe value must be a string. If not specified, `required`` must be `true`.\n\nExample: `default = \"default value\"`\n\nLearn more: https://spinframework.dev/variables#adding-variables-to-your-applications",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description": {
+          "description": "A brief description of the variable.\n\nExample: `description = \"This is a variable\"`\n\nLearn more: https://spinframework.dev/variables#adding-variables-to-your-applications",
           "type": [
             "string",
             "null"
           ]
         },
         "required": {
-          "description": "Whether a value must be supplied at runtime. If not specified, required defaults to `false`, and `default` must be provided.\n\nExample: `required = true`\n\nLearn more: https://spinframework.dev/variables#adding-variables-to-your-applications",
+          "description": "Whether a value must be supplied at runtime. If not specified, required defaults\nto `false`, and `default` must be provided.\n\nExample: `required = true`\n\nLearn more: https://spinframework.dev/variables#adding-variables-to-your-applications",
           "type": "boolean"
         },
         "secret": {
@@ -622,10 +792,6 @@
         },
         {
           "type": "object",
-          "required": [
-            "destination",
-            "source"
-          ],
           "properties": {
             "destination": {
               "description": "The path where the `source` directory appears in the guest. Must be absolute.\n\n`destination = \"/\"`\n\nLearn more: https://spinframework.dev/writing-apps#including-files-with-components",
@@ -636,12 +802,16 @@
               "type": "string"
             }
           },
-          "additionalProperties": false
+          "additionalProperties": false,
+          "required": [
+            "source",
+            "destination"
+          ]
         }
       ]
     },
     "WatchCommand": {
-      "description": "Source files to use in `spin watch`. This is a set of paths or glob patterns (relative to the build working directory). A change to any matching file causes `spin watch` to rebuild the application before restarting the application.\n\nExample: `watch = [\"src/**/*.rs\"]`\n\nLearn more: https://spinframework.dev/running-apps#monitoring-applications-for-changes",
+      "description": "Source files to use in `spin watch`. This is a set of paths or glob patterns (relative\nto the build working directory). A change to any matching file causes\n`spin watch` to rebuild the application before restarting the application.\n\nExample: `watch = [\"src/**/*.rs\"]`\n\nLearn more: https://spinframework.dev/running-apps#monitoring-applications-for-changes",
       "anyOf": [
         {
           "type": "string"
