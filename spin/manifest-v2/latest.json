@@ -588,6 +588,13 @@
             "$ref": "#/$defs/OneOrManyComponentSpecs"
           }
         },
+        "dependencies": {
+          "description": "`dependencies.middleware = { ... }`",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/TriggerDependencies"
+          }
+        },
         "executor": {
           "description": "`executor = { type = \"wagi\" }",
           "type": "object",
@@ -600,6 +607,17 @@
         "route": {
           "description": "`route = \"/user/:name/...\"`",
           "$ref": "#/$defs/HttpRouteSchema"
+        },
+        "static_response": {
+          "description": "`static_response = { ... }`",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StaticResponseSchema"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "additionalProperties": false,
@@ -699,6 +717,37 @@
         }
       ]
     },
+    "StaticResponseSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "description": "The body of the static response. Default is an empty body.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "headers": {
+          "description": "The headers for the static response. Default is an empty map.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {}
+        },
+        "status_code": {
+          "description": "The status code for the static response. Default is 200.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
     "TargetEnvironmentRef": {
       "description": "Identifies a deployment target.",
       "anyOf": [
@@ -732,6 +781,131 @@
           "additionalProperties": false,
           "required": [
             "path"
+          ]
+        }
+      ]
+    },
+    "TriggerDependencies": {
+      "description": "One or many `ComponentSpec`(s)",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/TriggerDependency"
+      }
+    },
+    "TriggerDependency": {
+      "description": "Specifies how to satisfy an import dependency of the component. This may be one of:\n\n- A semantic versioning constraint for the package version to use. Spin fetches the latest matching version of the package whose name matches the dependency name from the default registry.\n\nExample: `\"my:dep/import\" = \">= 0.1.0\"`\n\n- A package from a registry.\n\nExample: `\"my:dep/import\" = { version = \"0.1.0\", registry = \"registry.io\", ...}`\n\n- A package from a filesystem path.\n\nExample: `\"my:dependency\" = { path = \"path/to/component.wasm\", export = \"my-export\" }`\n\n- A component in the application. The referenced component binary is composed: additional\n  configuration such as files, networking, storage, etc. are ignored. This is intended\n  primarily as a convenience for including dependencies in the manifest so that they\n  can be built using `spin build`.\n\nExample: `\"my:dependency\" = { component = \"my-dependency\", export = \"my-export\" }`\n\n- A package from an HTTP URL.\n\nExample: `\"my:import\" = { url = \"https://example.com/component.wasm\", sha256 = \"sha256:...\" }`\n\nLearn more: https://spinframework.dev/v3/writing-apps#using-component-dependencies",
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "inherit_configuration": {
+              "description": "The set of configurations to inherit from the parent component. If omitted or set to `false`,\nno configurations will be inherited. If `true`, all configurations will be inherited.\nSelective inheritance can be specified by enumerating the configuration keys the dependency\nwould like to inherit.\n\nExamples:\n    `\"my:dep/import\" = { version = \"0.1.0\", inherit_configuration = true }`\n    `\"my:dep/import\" = { version = \"0.1.0\", inherit_configuration = [\"ai_models\", \"allowed_outbound_hosts\"] }`",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/InheritConfiguration"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "package": {
+              "description": "The name of the package to use. If omitted, this defaults to the package name of the\nimported interface.\n\nExample: `\"my:dep/import\" = { package = \"your:implementation\", version = \"0.1.0\" }`\n\nLearn more: https://spinframework.dev/writing-apps#dependencies-from-a-registry",
+              "type": "string"
+            },
+            "registry": {
+              "description": "The registry that hosts the package. If omitted, this defaults to your\nsystem default registry.\n\nExample: `\"my:dep/import\" = { registry = \"registry.io\", version = \"0.1.0\" }`\n\nLearn more: https://spinframework.dev/writing-apps#dependencies-from-a-registry",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "version": {
+              "description": "A semantic versioning constraint for the package version to use. Required. Spin\nfetches the latest matching version from the specified registry, or from\nthe default registry if no registry is specified.\n\nExample: `\"my:dep/import\" = { version = \">= 0.1.0\" }`\n\nLearn more: https://spinframework.dev/writing-apps#dependencies-from-a-registry",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "version",
+            "package"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "inherit_configuration": {
+              "description": "The set of configurations to inherit from the parent component. If omitted or set to `false`,\nno configurations will be inherited. If `true`, all configurations will be inherited.\nSelective inheritance can be specified by enumerating the configuration keys the dependency\nwould like to inherit.\n\nExamples:\n    `\"my:dep/import\" = { version = \"0.1.0\", inherit_configuration = true }`\n    `\"my:dep/import\" = { version = \"0.1.0\", inherit_configuration = [\"ai_models\", \"allowed_outbound_hosts\"] }`",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/InheritConfiguration"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "path": {
+              "description": "The path to the Wasm file that implements the dependency.\n\nExample: `\"my:dep/import\" = { path = \"path/to/component.wasm\" }`\n\nLearn more: https://spinframework.dev/writing-apps#dependencies-from-a-local-component",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "path"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "digest": {
+              "description": "The SHA256 digest of the Wasm file. This is required for integrity checking. Must begin with `sha256:`.\n\nExample: `\"my:dep/import\" = { sha256 = \"sha256:...\", ... }`\n\nLearn more: https://spinframework.dev/writing-apps#dependencies-from-a-url",
+              "type": "string"
+            },
+            "inherit_configuration": {
+              "description": "The set of configurations to inherit from the parent component. If omitted or set to `false`,\nno configurations will be inherited. If `true`, all configurations will be inherited.\nSelective inheritance can be specified by enumerating the configuration keys the dependency\nwould like to inherit.\n\nExamples:\n    `\"my:dep/import\" = { version = \"0.1.0\", inherit_configuration = true }`\n    `\"my:dep/import\" = { version = \"0.1.0\", inherit_configuration = [\"ai_models\", \"allowed_outbound_hosts\"] }`",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/InheritConfiguration"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "url": {
+              "description": "The URL to the Wasm component that implements the dependency.\n\nExample: `\"my:dep/import\" = { url = \"https://example.com/component.wasm\", sha256 = \"sha256:...\" }`\n\nLearn more: https://spinframework.dev/writing-apps#dependencies-from-a-url",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "url",
+            "digest"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "component": {
+              "description": "The ID of the component which implements the dependency.\n\nExample: `\"my:dep/import\" = { component = \"my-dependency\" }`\n\nLearn more: https://spinframework.dev/writing-apps#using-component-dependencies",
+              "$ref": "#/$defs/Id"
+            },
+            "inherit_configuration": {
+              "description": "The set of configurations to inherit from the parent component. If omitted or set to `false`,\nno configurations will be inherited. If `true`, all configurations will be inherited.\nSelective inheritance can be specified by enumerating the configuration keys the dependency\nwould like to inherit.\n\nExamples:\n    `\"my:dep/import\" = { version = \"0.1.0\", inherit_configuration = true }`\n    `\"my:dep/import\" = { version = \"0.1.0\", inherit_configuration = [\"ai_models\", \"allowed_outbound_hosts\"] }`",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/InheritConfiguration"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "component"
           ]
         }
       ]
